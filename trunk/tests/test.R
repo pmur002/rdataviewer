@@ -1,0 +1,97 @@
+
+source("viewer/R/Classes.R")
+source("viewer/R/Generics.R")
+source("viewer/R/data.R")
+source("viewer/R/state.R")
+source("viewer/R/device.R")
+source("viewer/R/viewer.R")
+source("viewer/R/tcltk.R")
+
+# mtcars
+temp <- mtcars
+rownames(temp) <- NULL
+cars <- cbind(name=rownames(mtcars), temp)
+data <- viewerDataFrame(cars)
+
+# exoplanets
+data <- viewerDataFrame(read.csv("exoplanets.csv"))
+
+vdv <- new("ViewerDeviceViewport",
+           datavp=viewport(x=unit(2, "mm"), y=unit(2, "mm"),
+             width=unit(1, "npc") - unit(4, "mm"),
+             # 1.5 lines for col headings
+             height=unit(1, "npc") - unit(1.5, "lines") -
+             unit(4, "mm"),
+             just=c("left", "bottom")),
+           headvp=viewport(x=unit(2, "mm"),
+             y=unit(1, "npc") - unit(2, "mm"),
+             width=unit(1, "npc") - unit(4, "mm"),
+             height=unit(1.5, "lines"),
+             just=c("left", "top")))
+
+           
+v <- simpleViewer(data, dev=vdv)
+         
+tcltkViewer(v)
+
+
+#############
+# Testing by hand
+draw(v)
+
+v <- lrscroll(v)
+draw(v)
+
+v <- lrscroll(v, side="left")
+draw(v)
+
+v <- lrshrink(v)
+draw(v)
+
+v <- lrshrink(v, side="left")
+draw(v)
+
+v <- lrgrow(v)
+draw(v)
+
+v <- lrgrow(v, side="left")
+draw(v)
+
+v <- udscroll(v)
+draw(v)
+
+v <- udscroll(v, side="bottom")
+draw(v)
+
+v <- udscroll(v, page=TRUE)
+draw(v)
+
+v <- udscroll(v, side="bottom", page=TRUE)
+draw(v)
+
+v <- udgrow(v)
+draw(v)
+
+v <- udgrow(v, side="bottom")
+draw(v)
+
+v <- udgrow(v, page=TRUE)
+draw(v)
+
+v <- udgrow(v, side="bottom", page=TRUE)
+draw(v)
+
+v <- udshrink(v)
+draw(v)
+
+v <- udshrink(v, side="bottom")
+draw(v)
+
+v <- udshrink(v, page=TRUE)
+draw(v)
+
+v <- udshrink(v, side="bottom", page=TRUE)
+draw(v)
+
+
+
