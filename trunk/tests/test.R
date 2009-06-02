@@ -1,11 +1,11 @@
 
-source("viewer/R/Classes.R")
-source("viewer/R/Generics.R")
-source("viewer/R/data.R")
-source("viewer/R/state.R")
-source("viewer/R/device.R")
-source("viewer/R/viewer.R")
-source("viewer/R/tcltk.R")
+source("rdataviewer/R/Classes.R")
+source("rdataviewer/R/Generics.R")
+source("rdataviewer/R/data.R")
+source("rdataviewer/R/state.R")
+source("rdataviewer/R/device.R")
+source("rdataviewer/R/viewer.R")
+source("rdataviewer/R/tcltk.R")
 
 # mtcars
 temp <- mtcars

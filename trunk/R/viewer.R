@@ -4,10 +4,10 @@ setClass("ViewerSimple",
          representation(dev="ViewerDevice",
                         state="ViewerState",
                         data="ViewerData",
-                        rows="numeric",
-                        cols="numeric"),
-         prototype(cols=1,
-                   rows=1),
+                        startcol="numeric",
+                        startrow="numeric"),
+         prototype(startcol=1,
+                   startrow=1),
          contains="Viewer")
 
 simpleViewer <- function(data,
@@ -15,97 +15,87 @@ simpleViewer <- function(data,
                          dev=new("ViewerDeviceDefault")) {
     v <- new("ViewerSimple",
              dev=dev, state=state, data=data)
-    dim <- dimensions(data)
-    # Initialise rows and cols based on data
-    # How many chars do we have to view?
-    numChars <- numChars(v@dev, fontsize(v@state))
-    cumWidths <- cumsum(colWidths(v@data))
-    lastCol <- min(which(cumWidths > numChars))
-    v@cols <- seq(1, min(lastCol, dim[2]))
-    numRows <- numRows(v@dev, fontsize(v@state))
-    v@rows <- seq(1, min(numRows, dim[1]))
     v
 }
 
-# Having added or fully revealed col on right, update which
-# is the leftmost column
-# If zooming, there can be drastic changes, so need to consider
-# more columns
-updateColsLeft <- function(v, zoom=FALSE) {
-    right <- max(v@cols)
-    # May have made columns on left-hand-side invisible
-    # so recalculate visible cols
-    # How many chars do we have?
-    numChars <- numChars(v@dev, fontsize(v@state))
+# In right-to-left mode, the startcol is the right-most column.
+# Which is the left-most column?
+viewerColsLeft <- function(v, numChars) {
+    right <- v@startcol
     # How many chars are in the visible columns?
-    if (zoom)
-        v@cols <- 1:max(v@cols)
-    widths <- colWidths(v@data, v@cols)
+    cols <- 1:right
+    widths <- colWidths(v@data, cols)
     # What is the new leftmost column?
     cumWidths <- rev(cumsum(rev(widths)))
     # It is possible that we need all columns
     if (all(cumWidths < numChars))
         left <- 1
     else 
-        left <- v@cols[max(which(cumWidths >
-                                 numChars))]
-    left:right
+        left <- cols[max(which(cumWidths >
+                               numChars))]
+    left
 }
 
-# Having added or fully revealed col on left, update which
-# is the rightmost column
-updateColsRight <- function(v, zoom=FALSE) {
-    dim <- dimensions(v@data)
-    left <- min(v@cols)
-    # May have made columns on right-hand-side invisible
-    # so recalculate visible cols
-    # How many chars do we have?
-    numChars <- numChars(v@dev, fontsize(v@state))
+# In left-to-right mode, the startcol is the left-most column.
+# Which is the right-most column?
+viewerColsRight <- function(v, dim, numChars) {
+    left <- v@startcol
     # How many chars are in the visible columns?
-    if (zoom) 
-        v@cols <- min(v@cols):(dim[2])
-    widths <- colWidths(v@data, v@cols)
+    cols <- left:(dim[2])
+    widths <- colWidths(v@data, cols)
     # What is the new rightmost column?
     cumWidths <- cumsum(widths)
     # It is possible that we need all columns
     if (all(cumWidths < numChars))
         right <- dim[2]
     else 
-        right <- v@cols[min(which(cumWidths >
-                                  numChars))]
-    left:right
+        right <- cols[min(which(cumWidths >
+                                numChars))]
+    right
+}
+
+# In bottom-to-top mode, the startrow is the bottom-most-row.
+# Which is the top-most row?
+viewerRowsTop <- function(v, numRows) {
+    bottom <- v@startrow
+    # What is the new top-most row?
+    top <- bottom - numRows + 1
+    # It is possible that we need all rows
+    if (top < 1)
+        top <- 1
+    top
+}
+
+# In top-to-bottom mode, the startrow is the top-most row.
+# Which is the bottom-most row?
+viewerRowsBottom <- function(v, dim, numRows) {
+    top <- v@startrow
+    # What is the new bottom-most row?
+    bottom <- top + numRows - 1
+    # It is possible that we need all rows
+    if (bottom > dim[1])
+        bottom <- dim[1]
+    bottom
 }
 
 # Scroll right (or left) to (fully) view the next column on the right (or left)
 setMethod("lrscroll", signature(v="ViewerSimple"),
           function(v, side="right") {
+              dim <- dimensions(v@data)
+              nChars <- numChars(v@dev, fontsize(v@state))
               if (side == "right") {
                   if (lrmode(v@state) == "left-to-right") {
                       lrmode(v@state) <- "right-to-left"
-                      v@cols <- updateColsLeft(v)
+                      v@startcol <- viewerColsRight(v, dim, nChars)
                   } else {
-                      # Have we got any more columns to show?
-                      dim <- dimensions(v@data)
-                      lastCol <- max(v@cols)
-                      nextCol <- lastCol + 1
-                      if (lastCol < dim[2]) {
-                          v@cols <- c(v@cols, nextCol)
-                          v@cols <- updateColsLeft(v)
-                      }
+                      v@startcol <- min(dim[2], v@startcol + 1)
                   }
               } else { # side == "left"                      
                   if (lrmode(v@state) == "right-to-left") {
                       lrmode(v@state) <- "left-to-right"
-                      v@cols <- updateColsRight(v)
+                      v@startcol <- viewerColsLeft(v, nChars)
                   } else {
-                      # Have we got any more columns to show?
-                      dim <- dimensions(v@data)
-                      firstCol <- min(v@cols)
-                      nextCol <- firstCol - 1
-                      if (firstCol > 1) {
-                          v@cols <- c(nextCol, v@cols)
-                          v@cols <- updateColsRight(v)
-                      }
+                      v@startcol <- max(1, v@startcol - 1)
                   }
               }
               v
@@ -117,8 +107,7 @@ setMethod("lrhome", signature(v="ViewerSimple"),
               if (lrmode(v@state) == "right-to-left") {
                   lrmode(v@state) <- "left-to-right"
               }
-              v@cols <- 1:max(v@cols)
-              v@cols <- updateColsRight(v)
+              v@startcol <- 1
               v
           })
 
@@ -129,174 +118,150 @@ setMethod("lrend", signature(v="ViewerSimple"),
                   lrmode(v@state) <- "right-to-left"
               }
               dim <- dimensions(v@data)
-              v@cols <- min(v@cols):dim[2]
-              v@cols <- updateColsLeft(v)
+              v@startcol <- dim[2]
               v
           })
 
 # Zoom right (or left) to (fully) view the next column on the right (or left)
 setMethod("lrshrink", signature(v="ViewerSimple"),
           function(v, side="right") {
-              # How many chars do we 
+              dim <- dimensions(v@data)
+              nChars <- numChars(v@dev, fontsize(v@state))
               if (side == "right") {
                   if (lrmode(v@state) == "left-to-right") {
                       lrmode(v@state) <- "right-to-left"
-                      colChars <- sum(colWidths(v@data, v@cols))
+                      right <- viewerColsRight(v, dim, nChars)
+                      colChars <- sum(colWidths(v@data, (v@startcol):right))
                       fontsize(v@state) <- getFontForWidth(v@dev,
                                                            fontsize(v@state),
                                                            colChars)
+                      v@startcol <- right
                   } else {
+                      nextCol <- v@startcol + 1
                       # Have we got any more columns to show?
-                      dim <- dimensions(v@data)
-                      lastCol <- max(v@cols)
-                      nextCol <- lastCol + 1
-                      if (lastCol < dim[2]) {
-                          v@cols <- c(v@cols, nextCol)
-                          colChars <- sum(colWidths(v@data, v@cols))
+                      if (v@startcol < dim[2]) {
+                          left <- viewerColsLeft(v, nChars)
+                          v@startcol <- nextCol
+                          colChars <- sum(colWidths(v@data, left:(v@startcol)))
                           fontsize(v@state) <-
                               getFontForWidth(v@dev,
                                               fontsize(v@state),
                                               colChars)
                       }
                   }
-                  v@cols <- updateColsLeft(v, zoom=TRUE)
               } else { # side == "left"
                   if (lrmode(v@state) == "right-to-left") {
                       lrmode(v@state) <- "left-to-right"
-                      colChars <- sum(colWidths(v@data, v@cols))
+                      left <- viewerColsLeft(v, nChars)
+                      colChars <- sum(colWidths(v@data, left:(v@startcol)))
                       fontsize(v@state) <- getFontForWidth(v@dev,
                                                            fontsize(v@state),
                                                            colChars)
+                      v@startcol <- left 
                   } else {
+                      nextCol <- v@startcol - 1
                       # Have we got any more columns to show?
-                      firstCol <- min(v@cols)
-                      nextCol <- firstCol - 1
-                      if (firstCol > 1) {
-                          v@cols <- c(nextCol, v@cols)
-                          colChars <- sum(colWidths(v@data, v@cols))
+                      if (v@startcol > 1) {
+                          right <- viewerColsRight(v, dim, nChars)
+                          v@startcol <- nextCol
+                          colChars <- sum(colWidths(v@data,
+                                                    (v@startcol):right))
                           fontsize(v@state) <-
                               getFontForWidth(v@dev,
                                               fontsize(v@state),
                                               colChars)
                       }
                   }
-                  v@cols <- updateColsRight(v, zoom=TRUE)
               }
-              v@rows <- switch(udmode(v@state),
-                               "top-to-bottom"=updateRowsBottom(v),
-                               "bottom-to-top"=updateRowsTop(v))
               v
           })
 
 # Zoom OUT right (or left) to remove the column on the right (or left) 
 setMethod("lrgrow", signature(v="ViewerSimple"),
           function(v, side="right") {
+              dim <- dimensions(v@data)
+              nChars <- numChars(v@dev, fontsize(v@state))
               if (side == "right") {
                   if (lrmode(v@state) == "left-to-right") {
                       lrmode(v@state) <- "right-to-left"
+                      left <- v@startcol
+                      right <- viewerColsRight(v, dim, nChars)
+                  } else {
+                      left <- viewerColsLeft(v, nChars)
+                      right <- v@startcol
                   }
                   # Have we got any more columns to remove?
-                  nCols <- length(v@cols)
+                  nCols <- right - left + 1
                   if (nCols > 1) {
-                      v@cols <- v@cols[-nCols]
+                      right <- right - 1
+                      v@startcol <- right
+                      colChars <- sum(colWidths(v@data, left:right))
+                      fontsize(v@state) <- getFontForWidth(v@dev,
+                                                           fontsize(v@state),
+                                                           colChars,
+                                                           zoom="in")
                   }
-                  colChars <- sum(colWidths(v@data, v@cols))
-                  fontsize(v@state) <- getFontForWidth(v@dev,
-                                                       fontsize(v@state),
-                                                       colChars,
-                                                       zoom="out")
-                  v@cols <- updateColsLeft(v, zoom=TRUE)
               } else { # side == "left"
                   if (lrmode(v@state) == "right-to-left") {
                       lrmode(v@state) <- "left-to-right"
+                      left <- viewerColsLeft(v, nChars)
+                      right <- v@startcol
+                  } else {
+                      left <- v@startcol
+                      right <- viewerColsRight(v, dim, nChars)
                   }
                   # Have we got any more columns to remove?
-                  nCols <- length(v@cols)
+                  nCols <- right - left + 1
                   if (nCols > 1) {
-                      v@cols <- v@cols[-1]
+                      left <- left + 1
+                      v@startcol <- left
+                      colChars <- sum(colWidths(v@data, left:right))
+                      fontsize(v@state) <- getFontForWidth(v@dev,
+                                                           fontsize(v@state),
+                                                           colChars,
+                                                           zoom="in")
                   }
-                  colChars <- sum(colWidths(v@data, v@cols))
-                  fontsize(v@state) <- getFontForWidth(v@dev,
-                                                       fontsize(v@state),
-                                                       colChars,
-                                                       zoom="out")
-                  v@cols <- updateColsRight(v, zoom=TRUE)
               }
-              v@rows <- switch(udmode(v@state),
-                               "top-to-bottom"=updateRowsBottom(v),
-                               "bottom-to-top"=updateRowsTop(v))
               v
           })
-
-# Having added or fully revealed a row at the bottom,
-# determine which is the topmost row.
-# Some of these calculations are a little over-the-top
-# for just scrolling, but this allows code sharing
-# for both scrolling and zooming.
-updateRowsTop <- function(v) {
-    bottom <- max(v@rows)
-    # How many rows do we have?
-    numRows <- ceiling(numRows(v@dev, fontsize(v@state)))
-    # What is the new top-most row?
-    top <- bottom - numRows + 1
-    # It is possible that we need all rows
-    if (top < 1)
-        top <- 1
-    top:bottom
-}
-
-updateRowsBottom <- function(v) {
-    dim <- dimensions(v@data)
-    top <- min(v@rows) 
-    # How many rows do we have?
-    numRows <- ceiling(numRows(v@dev, fontsize(v@state)))
-    # What is the new bottom-most row?
-    bottom <- top + numRows - 1
-    # It is possible that we need all rows
-    if (bottom > dim[1])
-        bottom <- dim[1]
-    top:bottom
-}
 
 # Scroll up (or down) to (fully) view the next row (or page) above (or below)
 setMethod("udscroll", signature(v="ViewerSimple"),
           function(v, side="top", page=FALSE) {
               dim <- dimensions(v@data)
-              numRows <- ceiling(numRows(v@dev, fontsize(v@state)))
+              nRows <- trunc(numRows(v@dev, fontsize(v@state)))
               if (side == "top") {
                   if (page) {
                       if (udmode(v@state) == "bottom-to-top") {
                           udmode(v@state) <- "top-to-bottom"
+                          v@startrow <- max(1, v@startrow - 2*nRows)
+                      } else {
+                          v@startrow <- max(1, v@startrow - nRows)
                       }
-                      topRow <- max(1, min(v@rows) - numRows + 1)
                   } else {
                       if (udmode(v@state) == "bottom-to-top") {
                           udmode(v@state) <- "top-to-bottom"
-                          topRow <- min(v@rows)
+                          v@startrow <- max(1, v@startrow - nRows)
                       } else {
-                          topRow <- max(1, min(v@rows) - 1)
+                          v@startrow <- max(1, v@startrow - 1)
                       }
                   }
-                  bottomRow <- topRow + numRows
-                  v@rows <- topRow:bottomRow
-                  v@rows <- updateRowsBottom(v)
               } else { # side == "bottom"
                   if (page) {
                       if (udmode(v@state) == "top-to-bottom") {
                           udmode(v@state) <- "bottom-to-top"
+                          v@startrow <- min(dim[1], v@startrow + 2*nRows)
+                      } else {
+                          v@startrow <- min(dim[1], v@startrow + nRows)
                       }
-                      bottomRow <- min(dim[1], max(v@rows) + numRows - 1)
                   } else {
                       if (udmode(v@state) == "top-to-bottom") {
                           udmode(v@state) <- "bottom-to-top"
-                          bottomRow <- max(v@rows)
+                          v@startrow <- min(dim[1], v@startrow + nRows)
                       } else {
-                          bottomRow <- min(dim[1], max(v@rows) + 1)
+                          v@startrow <- min(dim[1], v@startrow + 1)
                       }
                   }
-                  topRow <- bottomRow - numRows
-                  v@rows <- topRow:bottomRow
-                  v@rows <- updateRowsTop(v)
               }
               v
           })
@@ -307,8 +272,7 @@ setMethod("udhome", signature(v="ViewerSimple"),
               if (udmode(v@state) == "bottom-to-top") {
                   udmode(v@state) <- "top-to-bottom"
               }
-              v@rows <- 1:max(v@rows)
-              v@rows <- updateRowsBottom(v)
+              v@startrow <- 1
               v
           })
 
@@ -319,8 +283,7 @@ setMethod("udend", signature(v="ViewerSimple"),
                   udmode(v@state) <- "bottom-to-top"
               }
               dim <- dimensions(v@data)
-              v@rows <- min(v@rows):dim[1]
-              v@rows <- updateRowsTop(v)
+              v@startrow <- dim[1]
               v
           })
 
@@ -328,48 +291,56 @@ setMethod("udend", signature(v="ViewerSimple"),
 setMethod("udshrink", signature(v="ViewerSimple"),
           function(v, side="top", page=FALSE) {
               dim <- dimensions(v@data)
-              bottom <- max(v@rows)
-              top <- min(v@rows)
+              nRows <- ceiling(numRows(v@dev, fontsize(v@state)))
               if (side == "top") {
                   if (page) {
                       if (udmode(v@state) == "bottom-to-top") {
                           udmode(v@state) <- "top-to-bottom"
+                          v@startrow <- max(1, v@startrow - 2*nRows)
+                      } else {
+                          v@startrow <- max(1, v@startrow - nRows)
                       }
-                      top <- max(1, trunc(top - (bottom - top)))
+                      fontsize(v@state) <- getFontForHeight(v@dev,
+                                                            fontsize(v@state),
+                                                            min(dim[1],
+                                                                2*nRows))
                   } else {
                       if (udmode(v@state) == "bottom-to-top") {
                           udmode(v@state) <- "top-to-bottom"
+                          v@startrow <- max(1, v@startrow - nRows)
                       } else {
-                          top <- max(1, top - 1)
+                          v@startrow <- max(1, v@startrow - 1)
                       }
+                      fontsize(v@state) <- getFontForHeight(v@dev,
+                                                            fontsize(v@state),
+                                                            min(dim[1],
+                                                                nRows + 1))
                   }                      
-                  fontsize(v@state) <- getFontForHeight(v@dev,
-                                                        fontsize(v@state),
-                                                        bottom - top + 1)
-                  v@rows <- top:bottom
-                  v@rows <- updateRowsBottom(v)
               } else { # side == "bottom"
                   if (page) {
                       if (udmode(v@state) == "top-to-bottom") {
                           udmode(v@state) <- "bottom-to-top"
+                          v@startrow <- min(dim[1], v@startrow + 2*nRows)
+                      } else {
+                          v@startrow <- min(dim[1], v@startrow + nRows)
                       }
-                      bottom <- min(dim[1], bottom + (bottom - top))
+                      fontsize(v@state) <- getFontForHeight(v@dev,
+                                                            fontsize(v@state),
+                                                            min(dim[1],
+                                                                2*nRows))
                   } else {
                       if (udmode(v@state) == "top-to-bottom") {
                           udmode(v@state) <- "bottom-to-top"
+                          v@startrow <- min(dim[1], v@startrow + nRows)
                       } else {
-                          bottom <- min(dim[1], bottom + 1)
+                          v@startrow <- min(dim[1], v@startrow + 1)
                       }
+                      fontsize(v@state) <- getFontForHeight(v@dev,
+                                                            fontsize(v@state),
+                                                            min(dim[1],
+                                                                nRows + 1))
                   }
-                  fontsize(v@state) <- getFontForHeight(v@dev,
-                                                        fontsize(v@state),
-                                                        bottom - top + 1)
-                  v@rows <- top:bottom
-                  v@rows <- updateRowsTop(v)
               }
-              v@cols <- switch(lrmode(v@state),
-                               "left-to-right"=updateColsRight(v, zoom=TRUE),
-                               "right-to-left"=updateColsLeft(v, zoom=TRUE))
               v
           })
 
@@ -377,80 +348,94 @@ setMethod("udshrink", signature(v="ViewerSimple"),
 setMethod("udgrow", signature(v="ViewerSimple"),
           function(v, side="top", page=FALSE) {
               dim <- dimensions(v@data)
-              bottom <- max(v@rows)
-              top <- min(v@rows)
+              nRows <- ceiling(numRows(v@dev, fontsize(v@state)))
               if (side == "top") {
                   if (page) {
+                      halfNRow <- trunc(nRows/2)
                       if (udmode(v@state) == "bottom-to-top") {
                           udmode(v@state) <- "top-to-bottom"
+                          v@startrow <- max(1, v@startrow - halfNRow)
+                      } else {
+                          v@startrow <- min(dim[1],
+                                            v@startrow + halfNRow)
                       }
-                      top <- min(bottom, trunc(top + (bottom - top)/2))
+                      if (nRows > 1) {
+                          fontsize(v@state) <-
+                              getFontForHeight(v@dev,
+                                               fontsize(v@state),
+                                               max(1, nRows - halfNRow),
+                                               zoom="in")
+                      }
                   } else {
                       if (udmode(v@state) == "bottom-to-top") {
                           udmode(v@state) <- "top-to-bottom"
+                          v@startrow <- max(1, v@startrow - nRows + 1)
                       } else {
-                          top <- min(bottom, top + 1)
+                          v@startrow <- min(dim[1], v@startrow + 1)
                       }
+                      fontsize(v@state) <-
+                          getFontForHeight(v@dev,
+                                           fontsize(v@state),
+                                           max(1, nRows - 1),
+                                           zoom="in")
                   }
-                  fontsize(v@state) <- getFontForHeight(v@dev,
-                                                        fontsize(v@state),
-                                                        bottom - top + 1,
-                                                        zoom="out")
-                  v@rows <- top:bottom
-                  v@rows <- updateRowsBottom(v)
               } else { # side == "bottom"
                   if (page) {
+                      halfNRow <- trunc(nRows/2)
                       if (udmode(v@state) == "top-to-bottom") {
                           udmode(v@state) <- "bottom-to-top"
+                          v@startrow <- min(dim[1], v@startrow + halfNRow)
+                      } else {
+                          v@startrow <- max(1, v@startrow - halfNRow)
                       }
-                      bottom <- ceiling(bottom - (bottom - top)/2)
+                      fontsize(v@state) <-
+                          getFontForHeight(v@dev,
+                                           fontsize(v@state),
+                                           max(1, nRows - 1),
+                                           zoom="in") 
                   } else {
                       if (udmode(v@state) == "top-to-bottom") {
                           udmode(v@state) <- "bottom-to-top"
+                          v@startrow <- min(dim[1], v@startrow + nRows - 1)
                       } else {
-                          bottom <- max(top, bottom - 1)
+                          v@startrow <- max(1, v@startrow - 1)
                       }
+                      fontsize(v@state) <-
+                          getFontForHeight(v@dev,
+                                           fontsize(v@state),
+                                           max(1, nRows - 1),
+                                           zoom="in") 
                   }
-                  fontsize(v@state) <- getFontForHeight(v@dev,
-                                                        fontsize(v@state),
-                                                        bottom - top + 1,
-                                                        zoom="out")
-                  v@rows <- top:bottom
-                  v@rows <- updateRowsTop(v)
-                  
               }
-              v@cols <- switch(lrmode(v@state),
-                               "left-to-right"=updateColsRight(v, zoom=TRUE),
-                               "right-to-left"=updateColsLeft(v, zoom=TRUE))
               v
           })
 
 setMethod("renderData",
           signature(x="ViewerSimple"),
-          function(x) {
+          function(x, rows, cols) {
               grid.rect(gp=gpar(fill="white", lwd=.2))
               grid.clip()
-              text <- getText(x@data, x@rows, x@cols)
+              text <- getText(x@data, rows, cols)
               nr <- length(text)
+              # Extra 0.1 so text is not right up against border
               hmode <- switch(lrmode(x@state),
-                              "left-to-right"=list(hjust="left", xpos=0),
-                              "right-to-left"=list(hjust="right", xpos=1))
+                              "left-to-right"=list(hjust="left",
+                                xpos=unit(0.1, "lines")),
+                              "right-to-left"=list(hjust="right",
+                                xpos=unit(1, "npc") - unit(0.1, "lines")))
+              # Extra 0.1 so text is not right up against border
               vmode <- switch(udmode(x@state),
                               "bottom-to-top"=list(vjust="bottom",
-                                ypos=unit((nr - 1):0, "lines")),
+                                ypos=unit(0.1 + (nr - 1):0, "lines")),
                               "top-to-bottom"=list(vjust="top",
                                 ypos=unit(1, "npc") -
-                                unit(0:(nr - 1), "lines")))
+                                unit(0.1 + 0:(nr - 1), "lines")))
               grid.text(text, x=hmode$xpos, y=vmode$ypos,
               just=c(hmode$hjust, vmode$vjust),
                         gp=gpar(fontsize=fontsize(x@state), fontfamily="mono"))
               # Marker to indicate mode
               grid.clip(width=2, height=2)
               xpos <- 0:1
-              # xpos <- switch(lrmode(x@state),
-              #                "left-to-right"=unit(0:1, "inches"),
-              #                "right-to-left"=unit(1, "npc") -
-              #                                unit(0:1, "inches"))
               ypos <- switch(udmode(x@state),
                              "top-to-bottom"=1,
                              "bottom-to-top"=0)
@@ -459,33 +444,49 @@ setMethod("renderData",
                              "left-to-right"=0,
                              "right-to-left"=1)
               ypos <- 0:1
-              # ypos <- switch(udmode(x@state),
-              #                "top-to-bottom"=unit(1, "npc") -
-              #                                unit(0:1, "inches"),
-              #                "bottom-to-top"=unit(0:1, "inches"))
               grid.lines(xpos, ypos, gp=gpar(col=rgb(0, 0, 0, .5), lwd=2))
           })
 
 setMethod("renderHead",
           signature(x="ViewerSimple"),
-          function(x) {
+          function(x, cols) {
               hmode <- switch(lrmode(x@state),
                               "left-to-right"=list(hjust="left", xpos=0),
                               "right-to-left"=list(hjust="right", xpos=1))
-              grid.text(colNames(x@data, x@cols),
+              grid.text(colNames(x@data, cols),
                         x=hmode$xpos, 
                         just=c(hmode$hjust, "bottom"),
                         gp=gpar(fontsize=fontsize(x@state), fontfamily="mono"))
           })
+
+viewerRowsAndCols <- function(v) {
+    dim <- dimensions(v@data)
+    nChars <- numChars(v@dev, fontsize(v@state))
+    nRows <- ceiling(numRows(v@dev, fontsize(v@state)))
+    if (lrmode(v@state) == "left-to-right")
+        cols <- v@startcol:viewerColsRight(v, dim, nChars)
+    else
+        cols <- viewerColsLeft(v, nChars):v@startcol
+    if (udmode(v@state) == "top-to-bottom")
+        rows <- v@startrow:viewerRowsBottom(v, dim, nRows)
+    else
+        rows <- viewerRowsTop(v, nRows):v@startrow
+    list(rows=rows, cols=cols)
+}
+
+drawDetails.ViewerDataGrob <- function(x, recording) {
+    grid.rect(gp=gpar(fill="grey90"))
+    rc <- viewerRowsAndCols(x$v)
+    drawData(x$v, rc$rows, rc$cols, x$v@dev, fontsize(x$v@state))
+    drawHead(x$v, rc$cols, x$v@dev, fontsize(x$v@state))
+}
 
 # Given mode information and the data to view and the current text size,
 # draw the data
 setMethod("draw", signature(v="ViewerSimple"),
           function(v) {
               grid.newpage()
-              grid.rect(gp=gpar(fill="grey90"))
-              drawData(v, v@dev, fontsize(v@state))
-              drawHead(v, v@dev, fontsize(v@state))
+              grid.draw(grob(v=v, cl="ViewerDataGrob"))
           })
           
           

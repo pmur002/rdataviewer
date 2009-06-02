@@ -74,31 +74,31 @@ setGeneric("numRows",
                standardGeneric("numRows")
            })
            
-# If zooming "in" then need to fit AT LEAST numChars onto device
-# If zooming "out" then need to fit AT MOST numChars onto device
+# If zooming "out" then need to fit AT LEAST numChars onto device
+# If zooming "in" then need to fit AT MOST numChars onto device
 # 'fontsize' gives a starting font size
 # A device can set up a cache of fontsizes and precalculated
 # widths if it needs the speed up.
 setGeneric("getFontForWidth",
-           function(dev, fontsize, numChars, zoom="in") {
+           function(dev, fontsize, numChars, zoom="out") {
                standardGeneric("getFontForWidth")
            })           
 
-# If zooming "in" then need to fit AT LEAST numRows onto device
-# If zooming "out" then need to fit AT MOST numRows onto device
+# If zooming "out" then need to fit AT LEAST numRows onto device
+# If zooming "in" then need to fit AT MOST numRows onto device
 # 'fontsize' gives a starting font size
 setGeneric("getFontForHeight",
-           function(dev, fontsize, numRows, zoom="in") {
+           function(dev, fontsize, numRows, zoom="out") {
                standardGeneric("getFontForHeight")
            })           
 
 setGeneric("drawData",
-           function(x, dev, fontsize) {
+           function(x, rows, cols, dev, fontsize) {
                standardGeneric("drawData")
            })
            
 setGeneric("drawHead",
-           function(x, dev, fontsize) {
+           function(x, cols, dev, fontsize) {
                standardGeneric("drawHead")
            })
 
@@ -160,11 +160,11 @@ setGeneric("udgrow",
            })
 
 setGeneric("renderData",
-           function(x) {
+           function(x, rows, cols) {
                standardGeneric("renderData")
            })
 
 setGeneric("renderHead",
-           function(x) {
+           function(x, cols) {
                standardGeneric("renderHead")
            })

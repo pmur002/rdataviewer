@@ -141,24 +141,29 @@ tcltkViewer <- function(v) {
         # classes derived from Viewer class
         dim <- dimensions(v@data)
         pushViewport(viewport(width=.99, height=.99))
-        grid.rect()
+        grid.rect(gp=gpar(fill="grey"))
         widths <- colWidths(v@data)
         fullWidth <- sum(widths)
         fullHeight <- dim[1]
         viewX <- switch(lrmode(v@state),
-                        "left-to-right"=if (v@cols[1] == 1) 0
-                        else sum(widths[1:(v@cols[1] - 1)]),
-                        "right-to-left"=sum(widths[1:max(v@cols)]))
+                        "left-to-right"=if (v@startcol == 1) 0
+                        else sum(widths[1:(v@startcol - 1)]),
+                        "right-to-left"=sum(widths[1:(v@startcol)]))
         hjust <- switch(lrmode(v@state),
                         "left-to-right"="left",
                         "right-to-left"="right")
         viewWidth <- nChars
-        viewY <- v@rows[1] - 1
+        viewY <- switch(udmode(v@state),
+                        "top-to-bottom"=v@startrow - 1,
+                        "bottom-to-top"=v@startrow)
+        vjust <- switch(udmode(v@state),
+                        "top-to-bottom"="top",
+                        "bottom-to-top"="bottom")
         viewHeight <- nRows
         grid.rect(viewX/fullWidth, 1 - viewY/fullHeight,
                   viewWidth/fullWidth, viewHeight/fullHeight,
-                  just=c(hjust, "top"),
-                  gp=gpar(col=NA, fill="pink"))
+                  just=c(hjust, vjust),
+                  gp=gpar(col=NA))
     }
     nChars <- numChars(v@dev, fontsize(v@state))
     nRows <- numRows(v@dev, fontsize(v@state))
