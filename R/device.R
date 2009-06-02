@@ -30,9 +30,9 @@ setMethod("numRows",
 
 setMethod("getFontForWidth",
           signature(dev="ViewerDeviceDefault"),
-          function(dev, fontsize, numChars, zoom="in") {
+          function(dev, fontsize, numChars, zoom="out") {
               nChar <- numChars(dev, fontsize)
-              if (zoom == "in") {
+              if (zoom == "out") {
                   # Just calculating font size as a proporation
                   # does not guarantee the right char width,
                   # so iterate until actually get the right
@@ -43,7 +43,7 @@ setMethod("getFontForWidth",
                       fontsize <- trunc(fontsize * nChar/numChars * 10)/10
                       nChar <- numChars(dev, fontsize)
                   }
-              } else { # zoom == "out"
+              } else { # zoom == "in"
                   while (nChar > numChars) {
                       # "truncate up" to one decimal place
                       # (i.e., be conservative)
@@ -56,9 +56,9 @@ setMethod("getFontForWidth",
 
 setMethod("getFontForHeight",
           signature(dev="ViewerDeviceDefault"),
-          function(dev, fontsize, numRows, zoom="in") {
+          function(dev, fontsize, numRows, zoom="out") {
               nRow <- numRows(dev, fontsize)
-              if (zoom == "in") {
+              if (zoom == "out") {
                   while (nRow < numRows) {
                       fontsize <- trunc(fontsize * nRow/numRows * 10)/10
                       nRow <- numRows(dev, fontsize)
@@ -74,14 +74,14 @@ setMethod("getFontForHeight",
                   
 setMethod("drawData",
           signature(x="ANY", dev="ViewerDeviceDefault"),
-          function(x, dev, fontsize) {
+          function(x, rows, cols, dev, fontsize) {
               # Just draw data in entire device
-              renderData(x)
+              renderData(x, rows, cols)
           })
 
 setMethod("drawHead",
           signature(x="ANY", dev="ViewerDeviceDefault"),
-          function(x, dev, fontsize) {
+          function(x, cols, dev, fontsize) {
               # No room set aside for headings
           })
 
@@ -89,12 +89,23 @@ setMethod("drawHead",
 ###################
 # ViewerDeviceViewport class
 
+library(grid)
+
 setOldClass("viewport")
 
 setClass("ViewerDeviceViewport",
          representation(datavp="viewport",
                         headvp="viewport"),
          contains="ViewerDeviceDefault")
+
+    # NOTE that within these methods, whenever we call a
+    # NextMethod, we need to convert the ViewerDeviceViewport
+    # into a ViewerDeviceDefault because otherwise any
+    # calls to generics in the next method will call
+    # the ViewerDeviceViewport method
+    # For example, the NextMethod for getFontForWidth()
+    # call numChars(), which has a method for ViewerDeviceViewport
+    # which will push viewports a second time!!!
 
 setMethod("numChars",
           signature(dev="ViewerDeviceViewport"),
@@ -104,7 +115,8 @@ setMethod("numChars",
               # Push the viewport
               pushViewport(dev@datavp)
               # Call inherited method
-              numChars <- callNextMethod()
+              numChars <- callNextMethod(new("ViewerDeviceDefault"),
+                                         fontsize)
               # Pop the viewport
               popViewport(depth + 1)
               numChars
@@ -118,7 +130,8 @@ setMethod("numRows",
               # Push the viewport
               pushViewport(dev@datavp)
               # Call inherited method
-              numRows <- callNextMethod()
+              numRows <- callNextMethod(new("ViewerDeviceDefault"),
+                                        fontsize)
               # Pop the viewport
               popViewport(depth + 1)
               numRows
@@ -126,13 +139,14 @@ setMethod("numRows",
 
 setMethod("getFontForWidth",
           signature(dev="ViewerDeviceViewport"),
-          function(dev, fontsize, numChars, zoom="in") {
+          function(dev, fontsize, numChars, zoom="out") {
               pushViewport(viewport(gp=gpar(fontsize=fontsize)))
               depth <- grid:::depth(dev@datavp)
               # Push the viewport
               pushViewport(dev@datavp)
               # Call inherited method
-              fontsize <- callNextMethod()
+              fontsize <- callNextMethod(new("ViewerDeviceDefault"),
+                                         fontsize, numChars, zoom)
               # Pop the viewport
               popViewport(depth + 1)
               fontsize
@@ -140,13 +154,14 @@ setMethod("getFontForWidth",
 
 setMethod("getFontForHeight",
           signature(dev="ViewerDeviceViewport"),
-          function(dev, fontsize, numRows, zoom="in") {
+          function(dev, fontsize, numRows, zoom="out") {
               pushViewport(viewport(gp=gpar(fontsize=fontsize)))
               depth <- grid:::depth(dev@datavp)
               # Push the viewport
               pushViewport(dev@datavp)
               # Call inherited method
-              fontsize <- callNextMethod()
+              fontsize <- callNextMethod(new("ViewerDeviceDefault"),
+                                         fontsize, numRows, zoom)
               # Pop the viewport
               popViewport(depth + 1)
               fontsize
@@ -154,24 +169,24 @@ setMethod("getFontForHeight",
 
 setMethod("drawData",
           signature(x="ANY", dev="ViewerDeviceViewport"),
-          function(x, dev, fontsize) {
+          function(x, rows, cols, dev, fontsize) {
               pushViewport(viewport(gp=gpar(fontsize=fontsize)))
               depth <- grid:::depth(dev@datavp)
               # Push the viewport
               pushViewport(dev@datavp)
-              renderData(x)
+              renderData(x, rows, cols)
               # Pop the viewport
               popViewport(depth + 1)
           })
 
 setMethod("drawHead",
           signature(x="ANY", dev="ViewerDeviceViewport"),
-          function(x, dev, fontsize) {
+          function(x, cols, dev, fontsize) {
               pushViewport(viewport(gp=gpar(fontsize=fontsize)))
               depth <- grid:::depth(dev@headvp)
               # Push the viewport
               pushViewport(dev@headvp)
-              renderHead(x)
+              renderHead(x, cols)
               # Pop the viewport
               popViewport(depth + 1)
           })
