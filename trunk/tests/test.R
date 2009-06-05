@@ -2,6 +2,7 @@
 source("rdataviewer/R/Classes.R")
 source("rdataviewer/R/Generics.R")
 source("rdataviewer/R/data.R")
+source("rdataviewer/R/data-text.R")
 source("rdataviewer/R/state.R")
 source("rdataviewer/R/device.R")
 source("rdataviewer/R/viewer.R")
@@ -15,6 +16,20 @@ data <- viewerDataFrame(cars)
 
 # exoplanets
 data <- viewerDataFrame(read.csv("exoplanets.csv"))
+
+data <- viewerDataText("exoplanets.csv")
+
+# Metrix
+# Of course this only works on stat18
+data <- viewerDataText("/scratch/Metrix/Data/MEENDL10092008_001-lines.XML",
+                       estimate=100)
+# Takes about 20s to count the number of lines and generate an index! 
+data <- viewerDataText("/scratch/Metrix/Data/MEENDL30102008_001-lines.XML",
+                       index=TRUE)
+
+# Large test file
+# writeLines(as.character(1:4000000), "/scratch/large.txt")
+data <- viewerDataText("/scratch/large.txt", index=TRUE)
 
 vdv <- new("ViewerDeviceViewport",
            datavp=viewport(x=unit(2, "mm"), y=unit(2, "mm"),

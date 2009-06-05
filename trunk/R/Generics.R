@@ -110,7 +110,7 @@ setGeneric("draw",
            })
 
 setGeneric("lrscroll",
-           function(v, side="right") {
+           function(v, side="right", n=1) {
                standardGeneric("lrscroll")
            })
 
@@ -125,17 +125,17 @@ setGeneric("lrend",
            })
         
 setGeneric("lrshrink",
-           function(v, side="right") {
+           function(v, side="right", n=1) {
                standardGeneric("lrshrink")
            })
 
 setGeneric("lrgrow",
-           function(v, side="right") {
+           function(v, side="right", n=1) {
                standardGeneric("lrgrow")
            })
 
 setGeneric("udscroll",
-           function(v, side="top", page=FALSE) {
+           function(v, side="top", page=FALSE, n=1) {
                standardGeneric("udscroll")
            })
 
@@ -150,12 +150,12 @@ setGeneric("udend",
            })
         
 setGeneric("udshrink",
-           function(v, side="top", page=FALSE) {
+           function(v, side="top", page=FALSE, n=1) {
                standardGeneric("udshrink")
            })
 
 setGeneric("udgrow",
-           function(v, side="top", page=FALSE) {
+           function(v, side="top", page=FALSE, n=1) {
                standardGeneric("udgrow")
            })
 

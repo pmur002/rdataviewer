@@ -2,7 +2,8 @@
 # A simple data frame
 # Other options might include another basic R data structure,
 # a file (connection), or some "large data" interface,
-# such as a database connection or something from the "ff" package.
+# such as a database connection or something from the "ff" package
+# or the 'bigmemory' package ...
 setClass("ViewerDataFrame",
          representation(df="data.frame",
                         widths="numeric"),
