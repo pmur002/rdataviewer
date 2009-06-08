@@ -1,13 +1,17 @@
 
 source("rdataviewer/R/Classes.R")
 source("rdataviewer/R/Generics.R")
+source("rdataviewer/R/common.R")
 source("rdataviewer/R/data.R")
 source("rdataviewer/R/data-text.R")
+source("rdataviewer/R/data-mysql.R")
 source("rdataviewer/R/state.R")
 source("rdataviewer/R/device.R")
 source("rdataviewer/R/viewer.R")
 source("rdataviewer/R/tcltk.R")
 
+#########################
+# ViewerDataFrame examples
 # mtcars
 temp <- mtcars
 rownames(temp) <- NULL
@@ -17,6 +21,8 @@ data <- viewerDataFrame(cars)
 # exoplanets
 data <- viewerDataFrame(read.csv("exoplanets.csv"))
 
+#########################
+# ViewerDataText
 data <- viewerDataText("exoplanets.csv")
 
 # Metrix
@@ -30,6 +36,20 @@ data <- viewerDataText("/scratch/Metrix/Data/MEENDL30102008_001-lines.XML",
 # Large test file
 # writeLines(as.character(1:4000000), "/scratch/large.txt")
 data <- viewerDataText("/scratch/large.txt", index=TRUE)
+
+#########################
+# ViewerDataMySQL examples
+data <- viewerDataMySQL("select * from pottery_table",
+                        "china", "stat220", "2202009")
+
+# Do a larger STATS 220 data set ?
+data <- viewerDataMySQL("select * from innings_tbl",
+                        "cricket", "stat220", "2202009")
+
+# Do a large public database ?
+data <- viewerDataMySQL("select * from seq_region",
+                        "homo_sapiens_core_46_36h", "anonymous",
+                        host="ensembldb.ensembl.org")
 
 vdv <- new("ViewerDeviceViewport",
            datavp=viewport(x=unit(2, "mm"), y=unit(2, "mm"),
@@ -107,6 +127,5 @@ draw(v)
 
 v <- udshrink(v, side="bottom", page=TRUE)
 draw(v)
-
 
 
