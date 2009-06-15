@@ -65,29 +65,26 @@ setMethod("colNames",
                     sep= "")
           })
 
-# This might be made faster if we could get the number of rows
-# without having to look at the entire query result!
-# (although then would have to add options for estimating
-#  column widths as per the ViewerDataText class)
+# Get num rows by just doing a SELECT COUNT(*) on the query
+# Get (conesrvative) column widths from dbColumnInfo() 
 queryStats <- function(query, conn) {
-    result <- dbSendQuery(conn, query)
+    countQuery <- paste("SELECT COUNT(*) AS numrows FROM (",
+                        query, ") AS query",
+                        sep="")
+    result <- dbGetQuery(conn, countQuery)
+    nrows <- result$numrows
+    oneRowQuery <- paste("SELECT * FROM (",
+                        query, ") AS query LIMIT 1",
+                        sep="")
+    result <- dbSendQuery(conn, oneRowQuery)
     colInfo <- dbColumnInfo(result)
     colnames <- colInfo$name
-    widths <- numeric(length(colnames))
-    nrows <- 0
-    while (!dbHasCompleted(result)) {
-        part <- fetch(result)
-        if (is.null(colnames))
-            colnames <- names(part)
-        text <- format(part)
-        widths <- pmax(widths, sapply(text, function(t) { nchar(t[1]) }))
-        nrows <- nrows + nrow(part)
-    }
+    widths <- colInfo$len
     dbClearResult(result)
     list(colnames=colnames,
          # "plus one" because space is put in front of
          # each column when printing
-         widths=pmax(nchar(colnames), widths + 1),
+         widths=widths + 1,
          nrows=nrows)
 }
 
@@ -105,3 +102,6 @@ viewerDataMySQL <- function(query, dbname, username, password="", host=NULL) {
 }
 
 # FIXME:  Need a "finalizer" to break the db connection ?
+close.ViewerDataMySQL <- function(con, ...) {
+    dbDisconnect(con@dbcon)
+}

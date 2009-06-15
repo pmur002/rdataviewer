@@ -278,6 +278,13 @@ tcltkViewer <- function(v, bg="grey90", region="red") {
     tkgrid(tlNa, column=1, row=tkrow, sticky="e")
     tkgrid(tlNb, column=2, row=tkrow, sticky="w")
     tkrow <- tkrow + 1
+    shutDown <- function() {
+        close(v)
+        tkdestroy(tt)
+    }
+    tb <- tkbutton(tt, text="close", command=shutDown, background=bg)
+    tkgrid(tb, column=1, columnspan=2, row=tkrow)
+    tkrow <- tkrow + 1
     # Initialise the main view
     draw(v)
 }
