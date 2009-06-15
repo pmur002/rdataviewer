@@ -1,66 +1,69 @@
 
-# A simple data frame
+# Method for S3 generic for all ViewerData classes
+# (does nothing)
+close.ViewerData <- function(con, ...) { }
+
+# Default rowNames() method for all ViewerData classes
+setMethod("rowNames",
+          signature(data="ViewerData"),
+          function(data, rows) {
+              as.character(rows)
+          })
+
+setMethod("rowNameWidth",
+          signature(data="ViewerData"),
+          function(data) {
+              nchar(as.character(dimensions(data)[1]))
+          })
+
+# A simple vector
 # Other options might include another basic R data structure,
 # a file (connection), or some "large data" interface,
 # such as a database connection or something from the "ff" package
 # or the 'bigmemory' package ...
-setClass("ViewerDataFrame",
-         representation(df="data.frame",
-                        widths="numeric"),
+
+# The basic idea is that atomic vectors will just convert the
+# appropriate subset via as.character()
+# Anything else will get print()ed and the result will
+# be shown as a character vector
+setClass("ViewerDataVector",
+         representation(x="vector",
+                        name="character",
+                        width="numeric"),
          contains="ViewerData")
 
-calcWidths <- function(data) {
-    colWidth <- function(col) {
-        text <- capture.output(print(col, row.names=FALSE))
-        width <- max(nchar(text))
-    }
-    ow <- options(width=10000)
-    on.exit(ow)
-    widths <- numeric(length(data))
-    for (i in seq_along(widths)) {
-        widths[i] <- colWidth(data[i])
-    }
-    widths
-}
-
-setMethod("colWidths", signature(data="ViewerDataFrame"),
+setMethod("colWidths", signature(data="ViewerDataVector"),
           function(data, which=NULL) {
-              widths <- data@widths
-              if (is.null(which))
-                  widths
-              else
-                  widths[which]
+              # ONLY EVER 1 column
+              data@width
           })
 
 setMethod("getText",
-          signature(data="ViewerDataFrame",
+          signature(data="ViewerDataVector",
                     rows="numeric", cols="numeric"),
           function(data, rows, cols) {
-              subset <- data@df[rows, cols, drop=FALSE]
-              ow <- options(width=10000)
-              on.exit(ow)
+              subset <- data@x[rows]
               # Drop col names AFTER producing output
-              capture.output(print(subset, row.names=FALSE))[-1]
+              format(subset, width=data@width)
           })
 
-setMethod("dimensions", signature(data="ViewerDataFrame"),
+setMethod("dimensions", signature(data="ViewerDataVector"),
           function(data) {
-              dim(data@df)
+              c(length(data@x), 1)
           })
 
 setMethod("colNames",
-          signature(data="ViewerDataFrame", cols="numeric"),
+          signature(data="ViewerDataVector", cols="numeric"),
           function(data, cols) {
-              ow <- options(width=10000)
-              on.exit(ow)
-              capture.output(print(data@df[1, cols, drop=FALSE],
-                                   row.names=FALSE))[1]
+              format(data@name, width=data@width)
           })
 
-viewerDataFrame <- function(data) {
-    widths <- calcWidths(data)    
-    names(data) <- padColNames(names(data), widths)
-    new("ViewerDataFrame",
-        df=data,
-        widths=widths)
+viewerData <- function(x) {
+    if (!is.atomic(x)) {
+        x <- capture.output(print(x))
+    }
+    name <- deparse(substitute(x))
+    new("ViewerDataVector", x=x, name=name,
+        width=max(nchar(name),
+          nchar(format(x))))
 }

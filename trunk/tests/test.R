@@ -3,6 +3,7 @@ source("rdataviewer/R/Classes.R")
 source("rdataviewer/R/Generics.R")
 source("rdataviewer/R/common.R")
 source("rdataviewer/R/data.R")
+source("rdataviewer/R/data-frame.R")
 source("rdataviewer/R/data-text.R")
 source("rdataviewer/R/data-mysql.R")
 source("rdataviewer/R/state.R")
@@ -11,8 +12,21 @@ source("rdataviewer/R/viewer.R")
 source("rdataviewer/R/tcltk.R")
 
 #########################
+# ViewerDataVector examples
+data <- viewerData(1:10)
+
+data <- viewerData(letters)
+
+data <- viewerData(letters %in% c("a", "b", "c"))
+
+data <- viewerData(list(a=1, b=1:5, c="hello"))
+
+#########################
 # ViewerDataFrame examples
-# mtcars
+
+data <- viewerDataFrame(mtcars)
+
+# mtcars with rownames as a column
 temp <- mtcars
 rownames(temp) <- NULL
 cars <- cbind(name=rownames(mtcars), temp)
@@ -51,18 +65,29 @@ data <- viewerDataMySQL("select * from seq_region",
                         "homo_sapiens_core_46_36h", "anonymous",
                         host="ensembldb.ensembl.org")
 
+nameWidth <- unit(rowNameWidth(data) + 1, "grobwidth",
+                  textGrob(" ", gp=gpar(fontfamily="mono")))
 vdv <- new("ViewerDeviceViewport",
-           datavp=viewport(x=unit(2, "mm"), y=unit(2, "mm"),
-             width=unit(1, "npc") - unit(4, "mm"),
+           datavp=viewport(x=unit(2, "mm") + nameWidth,
+             y=unit(2, "mm"),
+             width=unit(1, "npc") - unit(4, "mm") - nameWidth,
              # 1.5 lines for col headings
-             height=unit(1, "npc") - unit(1.5, "lines") -
-             unit(4, "mm"),
-             just=c("left", "bottom")),
-           headvp=viewport(x=unit(2, "mm"),
+             height=unit(1, "npc") - unit(1.5, "lines") - unit(4, "mm"),
+             just=c("left", "bottom"),
+             clip=TRUE),
+           headvp=viewport(x=unit(2, "mm") + nameWidth,
              y=unit(1, "npc") - unit(2, "mm"),
-             width=unit(1, "npc") - unit(4, "mm"),
+             width=unit(1, "npc") - unit(4, "mm") - nameWidth,
              height=unit(1.5, "lines"),
-             just=c("left", "top")))
+             just=c("left", "top"),
+             clip=TRUE),
+           rownamevp=viewport(x=unit(2, "mm"),
+             y=unit(2, "mm"),
+             width=nameWidth,
+             # 1.5 lines for col headings
+             height=unit(1, "npc") - unit(1.5, "lines") - unit(4, "mm"),
+             just=c("left", "bottom"),
+             clip=TRUE))
 
            
 v <- simpleViewer(data, dev=vdv)
@@ -128,4 +153,5 @@ draw(v)
 v <- udshrink(v, side="bottom", page=TRUE)
 draw(v)
 
-
+# Clean up
+close(v)

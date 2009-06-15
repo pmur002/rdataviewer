@@ -85,6 +85,11 @@ setMethod("drawHead",
               # No room set aside for headings
           })
 
+setMethod("drawRowNames",
+          signature(x="ANY", dev="ViewerDeviceDefault"),
+          function(x, rows, dev, fontsize) {
+              # No room set aside for row names
+          })
 
 ###################
 # ViewerDeviceViewport class
@@ -95,7 +100,8 @@ setOldClass("viewport")
 
 setClass("ViewerDeviceViewport",
          representation(datavp="viewport",
-                        headvp="viewport"),
+                        headvp="viewport",
+                        rownamevp="viewport"),
          contains="ViewerDeviceDefault")
 
     # NOTE that within these methods, whenever we call a
@@ -187,6 +193,18 @@ setMethod("drawHead",
               # Push the viewport
               pushViewport(dev@headvp)
               renderHead(x, cols)
+              # Pop the viewport
+              popViewport(depth + 1)
+          })
+
+setMethod("drawRowNames",
+          signature(x="ANY", dev="ViewerDeviceViewport"),
+          function(x, rows, dev, fontsize) {
+              pushViewport(viewport(gp=gpar(fontsize=fontsize)))
+              depth <- grid:::depth(dev@rownamevp)
+              # Push the viewport
+              pushViewport(dev@rownamevp)
+              renderRowNames(x, rows)
               # Pop the viewport
               popViewport(depth + 1)
           })

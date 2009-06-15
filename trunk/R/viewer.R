@@ -386,14 +386,14 @@ renderLines <- function(x, rows, cols) {
                    "top-to-bottom"=unit(1, "npc") -
                      unit(rep(0.1 + 0:(nr - 1) + 0.5, nlines), "lines"))
     grid.segments(xstart, ypos, xend, ypos,
-                  gp=gpar(col=rgb(.5, .5, .6, .5)))
+                  gp=gpar(col=rgb(.5, .5, .6, .5),
+                    lwd=max(.1, fontsize(x@state))))
 }
 
 setMethod("renderData",
           signature(x="ViewerSimple"),
           function(x, rows, cols) {
               grid.rect(gp=gpar(fill="white", lwd=.2))
-              grid.clip()
               if (fontsize(x@state) >= x@threshold)
                   renderText(x, rows, cols)
               else
@@ -440,7 +440,47 @@ setMethod("renderHead",
                                  "right-to-left"=1 - (max(last) - last)/nChars)
                   grid.segments(xstart, unit(.5, "lines"),
                                 xend, unit(.5, "lines"),
-                                gp=gpar(col=rgb(.5, .5, .6, .5)))
+                                gp=gpar(col=rgb(.5, .5, .6, .5),
+                                  lwd=max(.1, fontsize(x@state))))
+              }
+          })
+
+setMethod("renderRowNames",
+          signature(x="ViewerSimple"),
+          function(x, rows) {
+              if (fontsize(x@state) >= x@threshold) {
+                  text <- rowNames(x@data, rows)
+                  nr <- length(text)
+                  vmode <- switch(udmode(x@state),
+                                  "bottom-to-top"=list(vjust="bottom",
+                                    ypos=unit(0.1 + (nr - 1):0, "lines")),
+                                  "top-to-bottom"=list(vjust="top",
+                                    ypos=unit(1, "npc") -
+                                    unit(0.1 + 0:(nr - 1), "lines")))
+                  grid.text(text,
+                            x=unit(1, "npc") - unit(0.5, "lines"),
+                            y=vmode$ypos, 
+                            just=c("right", vmode$vjust),
+                            gp=gpar(fontsize=fontsize(x@state),
+                              fontfamily="mono"))
+              } else {
+                  text <- rowNames(x@data, rows)
+                  nChars <- numChars(x@dev, fontsize(x@state))
+                  lines <- gregexpr("[^ ]+", text)
+                  nlines <- sapply(lines, length)
+                  first <- unlist(lines) - 1
+                  last <- first + unlist(lapply(lines, attr, "match.length")) 
+                  xstart <- 1 - (max(last) - first)/nChars
+                  xend <- 1 - (max(last) - last)/nChars
+                  ypos <- switch(udmode(x@state),
+                                 "bottom-to-top"=unit(rep(0.1 + (nr - 1):0 +
+                                   0.5, nlines), "lines"),
+                                 "top-to-bottom"=unit(1, "npc") -
+                                   unit(rep(0.1 + 0:(nr - 1) + 0.5, nlines),
+                                      "lines"))
+                  grid.segments(xstart, ypos, xend, ypos,
+                                gp=gpar(col=rgb(.5, .5, .6, .5),
+                                  lwd=max(.1, fontsize(x@state))))
               }
           })
 
@@ -464,6 +504,7 @@ drawDetails.ViewerDataGrob <- function(x, recording) {
     rc <- viewerRowsAndCols(x$v)
     drawData(x$v, rc$rows, rc$cols, x$v@dev, fontsize(x$v@state))
     drawHead(x$v, rc$cols, x$v@dev, fontsize(x$v@state))
+    drawRowNames(x$v, rc$rows, x$v@dev, fontsize(x$v@state))
 }
 
 # Given mode information and the data to view and the current text size,
@@ -474,5 +515,11 @@ setMethod("draw", signature(v="ViewerSimple"),
               grid.draw(grob(v=v, cl="ViewerDataGrob"))
           })
           
-          
+# Method for S3 generic close()
+close.Viewer <- function(con, ...) {
+    # Provide chance to shut down data connection
+    close(v@data)
+}
+
+
     

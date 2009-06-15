@@ -150,6 +150,7 @@ countLines <- function(file, index=FALSE, chunkSize=50e6, ...) {
 viewerDataText <- function(filename, width=NULL, estimate=NULL, index=FALSE,
                            ...) {
     readArgs <- list(...)
+    ncf <- nchar(filename)
     if (is.null(width)) {
         if (is.null(estimate)) {
             # If index is TRUE, we can get the maxWidth more
@@ -157,11 +158,13 @@ viewerDataText <- function(filename, width=NULL, estimate=NULL, index=FALSE,
             if (!index)
                 maxWidth <- max(nchar(do.call("readLines",
                                               c(list(con=filename),
-                                                readArgs))))
+                                                readArgs))),
+                                ncf)
         } else {
             maxWidth <- max(nchar(do.call("readLines",
                                           c(list(con=filename, n=estimate),
-                                            ...))))
+                                            ...))),
+                            ncf)
         }
     } else {
         maxWidth <- as.numeric(width)

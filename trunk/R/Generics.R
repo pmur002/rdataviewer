@@ -62,6 +62,17 @@ setGeneric("colNames",
                standardGeneric("colNames")
            })
 
+# The next two have sensible defaults so do NOT need specific methods
+setGeneric("rowNames",
+           function(data, rows) {
+               standardGeneric("rowNames")
+           })
+
+setGeneric("rowNameWidth",
+          function(data) {
+               standardGeneric("rowNameWidth")
+           })
+
 ######################
 # For ViewerDevice classes
 setGeneric("numChars",
@@ -100,6 +111,11 @@ setGeneric("drawData",
 setGeneric("drawHead",
            function(x, cols, dev, fontsize) {
                standardGeneric("drawHead")
+           })
+
+setGeneric("drawRowNames",
+           function(x, rows, dev, fontsize) {
+               standardGeneric("drawRowNames")
            })
 
 ######################
@@ -167,4 +183,9 @@ setGeneric("renderData",
 setGeneric("renderHead",
            function(x, cols) {
                standardGeneric("renderHead")
+           })
+
+setGeneric("renderRowNames",
+           function(x, rows) {
+               standardGeneric("renderRowNames")
            })
