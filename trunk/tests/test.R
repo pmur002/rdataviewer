@@ -21,6 +21,9 @@ data <- viewerData(letters %in% c("a", "b", "c"))
 
 data <- viewerData(list(a=1, b=1:5, c="hello"))
 
+habitats <- readLines("~/Teaching/2202009/Labs/Lab10/lab10.txt")
+data <- viewerData(habitats)
+
 #########################
 # ViewerDataFrame examples
 
@@ -46,6 +49,9 @@ data <- viewerDataText("/scratch/Metrix/Data/MEENDL10092008_001-lines.XML",
 # Takes about 20s to count the number of lines and generate an index! 
 data <- viewerDataText("/scratch/Metrix/Data/MEENDL30102008_001-lines.XML",
                        index=TRUE)
+# This may need unzipping 
+data <- viewerDataText("/home/fos/pmur002/Talks/Dept2009/Metrix/MEENDL30102008_001-blind.XML",
+                       index=TRUE)
 
 # Large test file
 # writeLines(as.character(1:4000000), "/scratch/large.txt")
@@ -65,31 +71,10 @@ data <- viewerDataMySQL("select * from seq_region",
                         "homo_sapiens_core_46_36h", "anonymous",
                         host="ensembldb.ensembl.org")
 
-nameWidth <- unit(rowNameWidth(data) + 1, "grobwidth",
-                  textGrob(" ", gp=gpar(fontfamily="mono")))
-vdv <- new("ViewerDeviceViewport",
-           datavp=viewport(x=unit(2, "mm") + nameWidth,
-             y=unit(2, "mm"),
-             width=unit(1, "npc") - unit(4, "mm") - nameWidth,
-             # 1.5 lines for col headings
-             height=unit(1, "npc") - unit(1.5, "lines") - unit(4, "mm"),
-             just=c("left", "bottom"),
-             clip=TRUE),
-           headvp=viewport(x=unit(2, "mm") + nameWidth,
-             y=unit(1, "npc") - unit(2, "mm"),
-             width=unit(1, "npc") - unit(4, "mm") - nameWidth,
-             height=unit(1.5, "lines"),
-             just=c("left", "top"),
-             clip=TRUE),
-           rownamevp=viewport(x=unit(2, "mm"),
-             y=unit(2, "mm"),
-             width=nameWidth,
-             # 1.5 lines for col headings
-             height=unit(1, "npc") - unit(1.5, "lines") - unit(4, "mm"),
-             just=c("left", "bottom"),
-             clip=TRUE))
+##################
 
-           
+vdv <- viewerDeviceVp(data)
+
 v <- simpleViewer(data, dev=vdv)
          
 tcltkViewer(v)

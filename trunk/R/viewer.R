@@ -10,7 +10,7 @@ setClass("ViewerSimple",
                         threshold="numeric"), 
          prototype(startcol=1,
                    startrow=1,
-                   threshold=6),
+                   threshold=4),
          contains="Viewer")
 
 simpleViewer <- function(data,
@@ -18,6 +18,13 @@ simpleViewer <- function(data,
                          dev=new("ViewerDeviceDefault")) {
     v <- new("ViewerSimple",
              dev=dev, state=state, data=data)
+    v
+}
+
+resetViewer <- function(v) {
+    v@startcol <- 1
+    v@startrow <- 1
+    v@state <- new("ViewerStateSimple")
     v
 }
 
@@ -465,6 +472,7 @@ setMethod("renderRowNames",
                               fontfamily="mono"))
               } else {
                   text <- rowNames(x@data, rows)
+                  nr <- length(text)
                   nChars <- numChars(x@dev, fontsize(x@state))
                   lines <- gregexpr("[^ ]+", text)
                   nlines <- sapply(lines, length)

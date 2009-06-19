@@ -15,8 +15,8 @@ tcltkViewer <- function(v, bg="grey90", region="red") {
     # Instructions
     tkrow <- 1
     addLabel <- function(tt, left, right) {
-        tla <- tklabel(tt, text=left, background=bg)
-        tlb <- tklabel(tt, text=paste(" ", right), background=bg)
+        tla <- tklabel(tt, text=paste(left, " "), background=bg)
+        tlb <- tklabel(tt, text=right, background=bg)
         tkgrid(tla, column=1, row=tkrow, sticky="e")
         tkgrid(tlb, column=2, row=tkrow, sticky="w")
         tkrow <<- tkrow + 1
@@ -31,6 +31,11 @@ tcltkViewer <- function(v, bg="grey90", region="red") {
     addLabel(tt, "<Escape>:", "clear <n>")
     addLabel(tt, "g:", "go to column <n>")
     addLabel(tt, "G:", "go to row <n>")
+    tlNa <- tklabel(tt, text="<n> =  ", background=bg)
+    tlNb <- tklabel(tt, textvariable=N, relief="sunken", background=bg)
+    tkgrid(tlNa, column=1, row=tkrow, sticky="e")
+    tkgrid(tlNb, column=2, row=tkrow, sticky="w")
+    tkrow <- tkrow + 1
     # Alphanumeric key bindings
     keyFun <- function(n) {
         num <- tclvalue(N)
@@ -273,17 +278,18 @@ tcltkViewer <- function(v, bg="grey90", region="red") {
     tkconfigure(miniview, background=bg)
     tkgrid(miniview, column=1, columnspan=2)
     tkrow <- tkrow + 1
-    tlNa <- tklabel(tt, text="<n> =   ", background=bg)
-    tlNb <- tklabel(tt, textvariable=N, relief="sunken", background=bg)
-    tkgrid(tlNa, column=1, row=tkrow, sticky="e")
-    tkgrid(tlNb, column=2, row=tkrow, sticky="w")
-    tkrow <- tkrow + 1
+    reset <- function() {
+        v <<- resetViewer(v)
+        update()
+    }
+    trb <- tkbutton(tt, text="reset", command=reset, background=bg)
     shutDown <- function() {
         close(v)
         tkdestroy(tt)
     }
-    tb <- tkbutton(tt, text="close", command=shutDown, background=bg)
-    tkgrid(tb, column=1, columnspan=2, row=tkrow)
+    tcb <- tkbutton(tt, text="close", command=shutDown, background=bg)
+    tkgrid(trb, column=1, row=tkrow)
+    tkgrid(tcb, column=2, row=tkrow)
     tkrow <- tkrow + 1
     # Initialise the main view
     draw(v)
