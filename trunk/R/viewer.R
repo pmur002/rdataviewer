@@ -526,7 +526,7 @@ setMethod("draw", signature(v="ViewerSimple"),
 # Method for S3 generic close()
 close.Viewer <- function(con, ...) {
     # Provide chance to shut down data connection
-    close(v@data)
+    close(con@data)
 }
 
 
