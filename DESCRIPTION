@@ -1,0 +1,9 @@
+Package:      rdataviewer
+Version:      0.1
+Title:        Data Viewer
+Author:       Paul Murrell
+Maintainer:   Paul Murrell <p.murrell@auckland.ac.nz>
+Description:  Functions for interactively viewing a variety of data sources.
+Depends:      methods, grid
+Suggests:     tcltk, tkrplot, RMySQL
+License:      GPL (>= 2)
