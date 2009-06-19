@@ -58,11 +58,12 @@ setMethod("colNames",
               format(data@name, width=data@width)
           })
 
-viewerData <- function(x) {
+viewerData <- function(x, name=NULL) {
     if (!is.atomic(x)) {
         x <- capture.output(print(x))
     }
-    name <- deparse(substitute(x))
+    if (is.null(name))
+        name <- deparse(substitute(x))
     new("ViewerDataVector", x=x, name=name,
         width=max(nchar(name),
           nchar(format(x))))

@@ -208,3 +208,30 @@ setMethod("drawRowNames",
               # Pop the viewport
               popViewport(depth + 1)
           })
+
+viewerDeviceVp <- function(data) {
+    nameWidth <- unit(rowNameWidth(data) + 1, "grobwidth",
+                      textGrob(" ", gp=gpar(fontfamily="mono")))
+    vdv <- new("ViewerDeviceViewport",
+               datavp=viewport(x=unit(2, "mm") + nameWidth,
+                 y=unit(2, "mm"),
+                 width=unit(1, "npc") - unit(4, "mm") - nameWidth,
+                                        # 1.5 lines for col headings
+                 height=unit(1, "npc") - unit(1.5, "lines") - unit(4, "mm"),
+                 just=c("left", "bottom"),
+                 clip=TRUE),
+               headvp=viewport(x=unit(2, "mm") + nameWidth,
+                 y=unit(1, "npc") - unit(2, "mm"),
+                 width=unit(1, "npc") - unit(4, "mm") - nameWidth,
+                 height=unit(1.5, "lines"),
+                 just=c("left", "top"),
+                 clip=TRUE),
+               rownamevp=viewport(x=unit(2, "mm"),
+                 y=unit(2, "mm"),
+                 width=nameWidth,
+                                        # 1.5 lines for col headings
+                 height=unit(1, "npc") - unit(1.5, "lines") - unit(4, "mm"),
+                 just=c("left", "bottom"),
+                 clip=TRUE))
+}
+
