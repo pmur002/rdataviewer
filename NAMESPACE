@@ -10,3 +10,5 @@ export(viewerData,
        simpleViewer,
        
        tcltkViewer)
+
+S3method("drawDetails", "ViewerDataGrob")
