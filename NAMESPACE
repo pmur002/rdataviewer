@@ -4,6 +4,7 @@ export(viewerData,
        viewerDataText,
        viewerDataMySQL,
        
+       viewerDevice,
        viewerDeviceVp,
        
        simpleViewer,

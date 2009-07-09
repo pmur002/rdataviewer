@@ -4,13 +4,15 @@
 setClass("ViewerStateSimple",
          representation(lrmode="character",
                         udmode="character",
-                        fontsize="numeric",
-                        cols="numeric",
-                        rows="numeric"),
+                        fontsize="numeric"),
          prototype(lrmode="left-to-right",
                    udmode="top-to-bottom",
                    fontsize=10),
          contains="ViewerState")
+
+viewerState <- function() {
+    new("ViewerStateSimple")
+}
 
 setMethod("lrmode", signature(state="ViewerStateSimple"),
           function(state) {

@@ -102,6 +102,7 @@ viewerDataMySQL <- function(query, dbname, username, password="", host=NULL) {
 }
 
 # FIXME:  Need a "finalizer" to break the db connection ?
+# Should this use reg.finalizer() ?
 close.ViewerDataMySQL <- function(con, ...) {
     dbDisconnect(con@dbcon)
 }

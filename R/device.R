@@ -91,6 +91,10 @@ setMethod("drawRowNames",
               # No room set aside for row names
           })
 
+viewerDevice <- function() {
+    new("ViewerDeviceDefault")
+}
+
 ###################
 # ViewerDeviceViewport class
 
