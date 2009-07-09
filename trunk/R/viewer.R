@@ -14,8 +14,8 @@ setClass("ViewerSimple",
          contains="Viewer")
 
 simpleViewer <- function(data,
-                         state=new("ViewerStateSimple"),
-                         dev=new("ViewerDeviceDefault")) {
+                         state=viewerState(),
+                         dev=viewerDevice()) {
     v <- new("ViewerSimple",
              dev=dev, state=state, data=data)
     v
