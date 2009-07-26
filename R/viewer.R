@@ -523,11 +523,6 @@ setMethod("draw", signature(v="ViewerSimple"),
               grid.draw(grob(v=v, cl="ViewerDataGrob"))
           })
           
-# Method for S3 generic close()
-close.Viewer <- function(con, ...) {
-    # Provide chance to shut down data connection
-    close(con@data)
-}
 
 
     

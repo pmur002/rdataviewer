@@ -7,8 +7,6 @@
 # of the query result, so should allow viewing of VERY large
 # database tables
 
-library(RMySQL)
-
 setClass("ViewerDataMySQL",
          representation(dbcon="MySQLConnection",
                         query="character",
@@ -89,20 +87,18 @@ queryStats <- function(query, conn) {
 }
 
 viewerDataMySQL <- function(query, dbname, username, password="", host=NULL) {
+    if (!require("RMySQL"))
+        stop("package RMySQL required")
     # Establish connection
     conn <- dbConnect(dbDriver("MySQL"),
                       username=username, password=password,
                       host=host, dbname=dbname)
     # Calculate summary stats for query
     stats <- queryStats(query, conn)
-    new("ViewerDataMySQL", dbcon=conn, query=query,
-        colnames=stats$colnames,
-        paddednames=padColNames(stats$colnames, stats$widths),
-        widths=stats$widths, nlines=stats$nrows)
-}
-
-# FIXME:  Need a "finalizer" to break the db connection ?
-# Should this use reg.finalizer() ?
-close.ViewerDataMySQL <- function(con, ...) {
-    dbDisconnect(con@dbcon)
+    vd <- new("ViewerDataMySQL", dbcon=conn, query=query,
+              colnames=stats$colnames,
+              paddednames=padColNames(stats$colnames, stats$widths),
+              widths=stats$widths, nlines=stats$nrows)
+    reg.finalizer(vd, function(vd) { dbDisconnect(vd@dbcon) }, onexit=TRUE)
+    vd
 }

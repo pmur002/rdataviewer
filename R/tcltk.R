@@ -1,7 +1,7 @@
-library(tcltk)
-library(tkrplot)
 
 tcltkViewer <- function(v, bg="grey90", region="red") {
+    if (!(require("tcltk") && require("tkrplot")))
+        stop("packages tcltk and tkrplot are required")
     tt <- tktoplevel(background=bg)
     tktitle(tt) <- "rdataviewer"
     N <- tclVar("-")
@@ -284,7 +284,6 @@ tcltkViewer <- function(v, bg="grey90", region="red") {
     }
     trb <- tkbutton(tt, text="reset", command=reset, background=bg)
     shutDown <- function() {
-        close(v)
         tkdestroy(tt)
     }
     tcb <- tkbutton(tt, text="close", command=shutDown, background=bg)

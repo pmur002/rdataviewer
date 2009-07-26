@@ -9,9 +9,6 @@
 \alias{lrhome,ViewerSimple-method}
 \alias{lrscroll,ViewerSimple-method}
 \alias{lrshrink,ViewerSimple-method}
-\alias{renderData,ViewerSimple-method}
-\alias{renderHead,ViewerSimple-method}
-\alias{renderRowNames,ViewerSimple-method}
 \alias{udend,ViewerSimple-method}
 \alias{udgrow,ViewerSimple-method}
 \alias{udhome,ViewerSimple-method}
@@ -59,12 +56,6 @@ The virtual class \code{"\linkS4class{Viewer}"}, directly.
     \item{lrshrink}{\code{signature(v = "ViewerSimple")}:
       zoom out the view to include the next/previous column.
     }
-    \item{renderData}{\code{signature(x = "ViewerSimple")}:
-      render just the data.}
-    \item{renderHead}{\code{signature(x = "ViewerSimple")}:
-      render column headers.}
-    \item{renderRowNames}{\code{signature(x = "ViewerSimple")}:
-      render row labels.}
     \item{udend}{\code{signature(v = "ViewerSimple")}:
       navigate to the last row.}
     \item{udgrow}{\code{signature(v = "ViewerSimple")}:
