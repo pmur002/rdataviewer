@@ -1,8 +1,4 @@
 
-# Method for S3 generic for all ViewerData classes
-# (does nothing)
-close.ViewerData <- function(con, ...) { }
-
 # Default rowNames() method for all ViewerData classes
 setMethod("rowNames",
           signature(data="ViewerData"),

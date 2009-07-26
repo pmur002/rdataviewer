@@ -1,4 +1,5 @@
 
+# Class constructors
 export(viewerData,
        viewerDataFrame,
        viewerDataText,
@@ -11,4 +12,13 @@ export(viewerData,
        
        tcltkViewer)
 
+# Navigation (generic) functions
+export(draw,
+       lrscroll, lrhome, lrend,
+       lrshrink, lrgrow,
+       udscroll, udhome, udend,
+       udshrink, udgrow)
+       
+importFrom(grid, drawDetails)
 S3method("drawDetails", "ViewerDataGrob")
+
