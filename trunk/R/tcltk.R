@@ -265,7 +265,10 @@ tcltkViewer <- function(v, bg="grey90", region="red") {
     nChars <- numChars(v@dev, fontsize(v@state))
     nRows <- numRows(v@dev, fontsize(v@state))
     width <- sum(colWidths(v@data))
-    height <- dimensions(v@data)[1]
+    # To size the region showing the data "shape"
+    # tweak the "height" by 1.5 because each row is taller than
+    # 1 char width
+    height <- dimensions(v@data)[1]*1.5
     if (height > width) {
         vscale <- .5
         # Avoid VERY small width or height because tkrplot can't handle it
