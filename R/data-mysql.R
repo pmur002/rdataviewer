@@ -86,6 +86,7 @@ queryStats <- function(query, conn) {
          nrows=nrows)
 }
 
+# FIXME: Would be nice to *disconnect* from the DBMS somehow
 viewerDataMySQL <- function(query, dbname, username, password="", host=NULL) {
     if (!require("RMySQL"))
         stop("package RMySQL required")
@@ -99,6 +100,5 @@ viewerDataMySQL <- function(query, dbname, username, password="", host=NULL) {
               colnames=stats$colnames,
               paddednames=padColNames(stats$colnames, stats$widths),
               widths=stats$widths, nlines=stats$nrows)
-    reg.finalizer(vd, function(vd) { dbDisconnect(vd@dbcon) }, onexit=TRUE)
     vd
 }
