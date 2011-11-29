@@ -10,7 +10,7 @@
   can occur efficiently.
 }
 \usage{
-viewerDataText(filename, width = NULL, estimate = NULL, index = FALSE, ...)
+viewerDataText(filename, width = NULL, estimate = NULL, index = TRUE, ...)
 }
 \arguments{
   \item{filename}{
