@@ -147,7 +147,7 @@ countLines <- function(file, index=FALSE, chunkSize=50e6, ...) {
 # to read to estimate the max width
 # If both of those are NULL, the entire file is read
 # ... are passed on to readLines() or scan()
-viewerDataText <- function(filename, width=NULL, estimate=NULL, index=FALSE,
+viewerDataText <- function(filename, width=NULL, estimate=NULL, index=TRUE,
                            ...) {
     readArgs <- list(...)
     ncf <- nchar(filename)

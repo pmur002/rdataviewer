@@ -1,4 +1,7 @@
 
+# Top-level convenience function
+export(view)
+
 # Class constructors
 export(viewerData,
        viewerDataFrame,

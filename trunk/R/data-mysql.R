@@ -102,3 +102,4 @@ viewerDataMySQL <- function(query, dbname, username, password="", host=NULL) {
               widths=stats$widths, nlines=stats$nrows)
     vd
 }
+
